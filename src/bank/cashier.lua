@@ -12,6 +12,38 @@ local currencyValues = {
     [ "numismatics:sun" ] = 4096
 }
 
+function waitForButtonPress()
+	local pressed = false
+	while not pressed do
+		local event, button, px, py = os.pullEvent("monitor_touch")
+		for text,button in pairs(buttons) do
+			if px >= button.x and px <= button.x + button.width and py >= button.y and py <= button.y + button.height then
+				button.cb()
+				buttons = {}
+				pressed = true
+			end
+		end
+	end
+end
+  
+function getButtonSurface(text, bg)
+	local textSize = surface.getTextSize(text, font)
+	local button = surface.create(textSize + 2, 7)
+	button:fillRect(0,0,textSize+2, 7, bg)
+	button:drawText(text, font, 1, 1, colors.black)
+	return button
+end
+
+function button(surface, text, bg, x, y, func, center)
+	local button = getButtonSurface(text, bg)
+	if center then
+		x = math.floor(x - button.width / 2)
+	end
+	surface:drawSurface(button, x, y)
+	buttons[text] = {x=x, y=y, width=button.width, height=button.height, cb=func}
+	return button
+end
+
 function getPlayerBalance(player)
 	rednet.send(MAINFRAME_ID, {type="getPlayerBalance", player = player}, "luckyladycasino")
 	local _, data = rednet.receive("luckyladycasino")
@@ -31,6 +63,11 @@ function setPlayerBalance(player, balance)
 	return
 end
 
+function centerText(text, y, color)
+	local tWidth = surface.getTextSize(text, font)
+	screen:drawText(text, font, math.floor((width - tWidth) / 2), y, color)
+end
+
 function dropInventory()
 	for i = 1,16 do
 		turtle.select(i)
@@ -39,6 +76,7 @@ function dropInventory()
 end
 
 function countMoney()
+	turtle.turnRight()
 	turtle.turnRight()
 	local sum = 0
 	for i = 1,2 do
@@ -56,7 +94,9 @@ function countMoney()
 				turtle.drop()
 			elseif item then
 				turtle.turnLeft()
+				turtle.turnLeft()
 				turtle.drop()
+				turtle.turnRight()
 				turtle.turnRight()
 			end
 		end
@@ -150,4 +190,39 @@ function dropMoney(amount)
 		turtle.turnRight()
 		turtle.drop()
 	end
+end
+
+function setup()
+	buttons = {}
+	surface = dofile("surface")
+	monitor = peripheral.find("monitor")
+	drive = peripheral.wrap("bottom")
+	monitor.setTextScale(0.5)
+	term.redirect(monitor)
+	width, height = term.getSize()
+	screen = surface.create(width, height)
+	font = surface.loadFont(surface.load("font"))
+	rednet.open("left")
+	redstone.setOutput("top", true)
+end
+
+function sleepTick()
+	os.sleep(0.05)
+end
+
+function detectHack(actualBalance)
+	local filePath = fs.combine(drive.getMountPath(), "bal")
+	if not fs.exists(filePath) then
+		return false
+	end
+	local file = fs.open(filePath, "r")
+	local fakeBalance = tonumber(file.readAll())
+	file.close()
+	file = fs.open(filePath, "w")
+	file.write(tostring(actualBalance))
+	file.close()
+	if fakeBalance ~= actualBalance then
+		return true
+	end
+	return false
 end

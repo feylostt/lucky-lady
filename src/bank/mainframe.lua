@@ -1,5 +1,7 @@
 rednet.open("bottom")
 
+local DiscordHook = require("DiscordHook")
+
 local databasePath = "db"
 local database
 
@@ -16,9 +18,15 @@ end
 
 print("Database loaded.")
 
+local success, hook = DiscordHook.createWebhook("https://discord.com/api/webhooks/1295862419289145388/azm20HdwjQ_fuFgF4uXlTLGpd3k5qJphBUedRhldvwFObdfia7NNm93D8Z0ySIDkhTGs")
+if not success then
+	error("Webhook connection failed! Reason: " .. hook)
+end
+
 while true do
 	local id, data = rednet.receive("luckyladycasino")
 	print(textutils.serialise(data))
+	hook.send(textutils.serialise(data), "Lucky Lady Casino", "https://styles.redditmedia.com/t5_8pimef/styles/communityIcon_xbgllumw3r8b1.png")
 	if data.type == "getPlayerBalance" then
 		print("Fetching balance for ", data.player)
 		rednet.send(id, database[data.player], "luckyladycasino")
