@@ -26,7 +26,7 @@ end
 while true do
 	local id, data = rednet.receive("luckyladycasino")
 	print(textutils.serialise(data))
-	hook.send(textutils.serialise(data), "Lucky Lady Casino", "https://styles.redditmedia.com/t5_8pimef/styles/communityIcon_xbgllumw3r8b1.png")
+	hook.send("```"..textutils.serialise(data).."```", "Lucky Lady Casino", "https://styles.redditmedia.com/t5_8pimef/styles/communityIcon_xbgllumw3r8b1.png")
 	if data.type == "getPlayerBalance" then
 		print("Fetching balance for ", data.player)
 		rednet.send(id, database[data.player], "luckyladycasino")

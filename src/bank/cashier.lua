@@ -226,3 +226,127 @@ function detectHack(actualBalance)
 	end
 	return false
 end
+
+
+setup()
+while true do
+	screen:clear()
+	centerText("Insert", 0, colors.white)
+	centerText("Card", 6, colors.white)
+	screen:output()
+	turtle.select(1)
+	local item = turtle.getItemDetail()
+	if item and item.name == "computercraft:disk" then
+		redstone.setOutput("top", false)
+		turtle.dropDown()
+		local player = drive.getDiskID()
+		local name, balance = getPlayerBalance(player)
+		if detectHack(balance) then
+			screen:clear()
+			centerText("Nice Try", 8, colors.red)
+			centerText("Nerd.", 14, colors.red)
+			screen:output()
+			os.sleep(5)
+			turtle.suckDown()
+			turtle.drop()
+			os.sleep(2)
+			redstone.setOutput("top", true)
+		else
+			if balance == nil then
+				turtle.suckDown()
+				turtle.drop()
+				screen:clear()
+				centerText("INVALID", 0, colors.red)
+				centerText("CARD", 6, colors.red)
+				centerText("Try", 12, colors.white)
+				centerText("Again", 18, colors.white)
+				screen:output()
+				os.sleep(2)
+				redstone.setOutput("top", true)
+			else
+				local userAction
+				while userAction ~= "done" do
+					screen:clear()
+					centerText("WELCOME", 1, colors.green)
+					centerText("$"..tostring(balance), 8, colors.lightBlue)
+					button(screen, "DEPOSIT", colors.lime, width / 2, 15, function() userAction="deposit" end, true)
+					button(screen, "PAYOUT", colors.red, width / 2, 23, function() userAction="withdraw" end, true)
+					button(screen, "DONE", colors.white, width / 2, 31, function() userAction="done" end, true)
+					screen:output()
+					waitForButtonPress()
+
+					if userAction == "deposit" then
+						redstone.setOutput("top", true)
+						screen:clear()
+						centerText("Insert", 0, colors.white)
+						centerText("¤¤¤", 6, colors.lightBlue)
+						button(screen, "DONE", colors.red, width / 2, 24, function() end, true)
+						screen:output()
+						waitForButtonPress()
+						redstone.setOutput("top", false)
+						screen:clear()
+						centerText("Counting", 2, colors.white)
+						centerText("...", 6, colors.white)
+						screen:output()
+						local sum = countMoney()
+						setPlayerBalance(player, balance + sum)
+						balance = balance + sum
+					elseif userAction == "withdraw" then
+						screen:clear()
+						centerText("PAYOUT", 1, colors.white)
+						centerText(tostring(balance).."¤", 7, colors.lightBlue)
+						local payoutAmount
+						if balance < 8 then
+							centerText("MINIMUM", 14, colors.red)
+							centerText("8¤", 20, colors.red)
+							button(screen, "DONE", colors.lime, width / 2, 28, function() end, true)
+							screen:output()
+							waitForButtonPress()
+						else
+							button(screen, "ALL", colors.yellow, width / 2, 14, function() payoutAmount="all" end, true)
+							if balance >= 16 then
+								button(screen, "HALF", colors.yellow, width / 2, 22, function() payoutAmount="half" end, true)
+								button(screen, "DONE", colors.lime, width / 2, 30, function() payoutAmount="cancel" end, true)
+							else
+								button(screen, "DONE", colors.lime, width / 2, 22, function() payoutAmount="cancel" end, true)
+							end
+							screen:drawString("Withdrawal fee: "..tostring(PAYOUT_FEE).."%", 0, height - 1, colors.black, colors.gray)
+							screen:output()
+							waitForButtonPress()
+							local diamondsToDrop = 0
+							if payoutAmount == "all" then
+								diamondsToDrop = balance
+							elseif payoutAmount == "half" then
+								diamondsToDrop = balance / 2
+							end
+							setPlayerBalance(player, math.floor(balance - diamondsToDrop))
+							balance = math.floor(balance - diamondsToDrop)
+							diamondsToDrop = math.floor(diamondsToDrop * (1 - PAYOUT_FEE / 100))
+							dropMoney(diamondsToDrop)
+						end
+					end
+				end
+				screen:clear()
+				centerText("Thanks!", 0, colors.white)
+				centerText("Good", 12, colors.yellow)
+				centerText("Luck", 18, colors.yellow)
+				screen:output()
+
+				name, balance = getPlayerBalance(player)
+				if balance ~= nil then
+					drive.setDiskLabel(name.."'s Lucky Lady Card - $"..tostring(balance))
+				end
+				turtle.suckDown()
+				turtle.drop()
+				os.sleep(4)
+				redstone.setOutput("top", true)
+			end
+		end
+	elseif item then
+		redstone.setOutput("top", false)
+		turtle.drop()
+		os.sleep(2)
+		redstone.setOutput("top", true)
+	end
+	dropInventory()
+end
