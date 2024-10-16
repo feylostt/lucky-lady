@@ -103,6 +103,7 @@ function countMoney()
 	end
 	turtle.select(1)
 	turtle.turnLeft()
+	turtle.turnLeft()
 	return sum
 end
 
