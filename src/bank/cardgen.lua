@@ -8,7 +8,7 @@ end
 
 
 local drive = peripheral.wrap("top")
-rednet.open("left")
+rednet.open("bottom")
 
 while true do
 	term.clear()

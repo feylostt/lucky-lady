@@ -196,13 +196,13 @@ function setup()
 	buttons = {}
 	surface = dofile("surface")
 	monitor = peripheral.find("monitor")
-	drive = peripheral.wrap("bottom")
+	drive = peripheral.wrap("left")
 	monitor.setTextScale(0.5)
 	term.redirect(monitor)
 	width, height = term.getSize()
 	screen = surface.create(width, height)
 	font = surface.loadFont(surface.load("font"))
-	rednet.open("right")
+	rednet.open("bottom")
 	redstone.setOutput("top", true)
 end
 
